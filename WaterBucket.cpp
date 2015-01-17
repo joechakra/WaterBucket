@@ -46,14 +46,12 @@ set<state> seen;
 
 bool Solve(const state& current)
 {
+	if (current == goal)
+	{
+		return true;
+	}
 	for (auto &p : allowed)
 	{
-		if (current == goal)
-		{
-			return true;
-		}
-		else
-		{
 			state next = DoPour(p, current);
 			if (seen.find(next) != seen.end()) 
 				continue;
@@ -67,7 +65,6 @@ bool Solve(const state& current)
 				}
 			}
 
-		}
 	}
 	return false;
 }
