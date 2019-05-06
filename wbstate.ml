@@ -11,16 +11,12 @@ module WBState =
 
 module Wbset = Set.Make(WBState)
 exception Invalid_Bucket 
-let start_state = (12,0,0)
-let seen = ref  Wbset.(empty |> add start_state)
-let goal = (6,6,0)
 let capacity = function
    0 ->12
    | 1 -> 8
    | 2 -> 5
    | _ -> raise Invalid_Bucket
 
-let pour_actions = [ (0,1); (0,2); (1,0); (1,2); (2,0); (2,1)]
 let current bucket cur =
   let x,y,z = cur in
   match bucket with
@@ -37,34 +33,43 @@ let change bucket value cur_state =
    |2 -> (x,y,z+ value)
    |_ -> raise Invalid_Bucket
 
-let min_val x y = if x< y then x else y
+(*let min_val x y = if x< y then x else y*)
 
 let do_pour action cur_state =
     let src,dst = action in
     if current src cur_state = 0 then cur_state
     else if current dst cur_state = capacity dst then cur_state
     else
-       let k = min_val (current src cur_state) (capacity dst - current dst cur_state) in
+       let k = min (current src cur_state) (capacity dst - current dst cur_state) in
           change src (0-k) cur_state |>  change dst k 
        
 let print_action action =
     let x,y = action in
     Printf.printf "From %d to %d\n" x y
 
-let rec solve cur_state = 
-  if WBState.compare cur_state goal = 0 then true
-  else
-      let sub_solve action =
-        let new_state = do_pour action cur_state in
-        if Wbset.mem  new_state !seen then false 
-        else (seen := Wbset.add new_state !seen ; 
-        if solve new_state 
-        then (print_action action; true) 
-        else false) 
-      in
-      List.exists sub_solve pour_actions
+let wbsolve start_state goal =
+  let seen = ref  Wbset.(empty |> add start_state) in 
+  let pour_actions = [ (0,1); (0,2); (1,0); (1,2); (2,0); (2,1)] in 
+  let rec solve cur_state  = 
+    if WBState.compare cur_state goal = 0 then true
+    else
+        let sub_solve action =
+          let new_state = do_pour action cur_state in
+          if Wbset.mem  new_state !seen then false 
+          else (
+            seen := Wbset.add new_state !seen ; 
+          if solve new_state 
+          then (print_action action; true) 
+          else false
+          ) 
+        in
+        List.exists sub_solve pour_actions
+  in
+  solve start_state
 
 let () =
-  if solve (12,0,0) then 
-  Printf.printf "all good\n"
+  Printf.printf "Actions in reverse order\n";
+  let goal = (6,6,0) in
+  let start_state = (12,0,0) in
+  wbsolve start_state goal |> ignore 
 
